@@ -168,6 +168,7 @@ class BaseValidator:
             if engine:
                 self.args.batch = model.batch_size
             elif not (pt or jit or getattr(model, "dynamic", False)):
+                print(model, "acesta ar trebui sa fie diferit de null")
                 self.args.batch = model.metadata.get("batch", 1)  # export.py models default to batch-size 1
                 LOGGER.info(f"Setting batch={self.args.batch} input of shape ({self.args.batch}, 3, {imgsz}, {imgsz})")
 
