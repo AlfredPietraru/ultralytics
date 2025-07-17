@@ -8,7 +8,7 @@ parser.add_argument('-m', '--model', help='model pt path')
 parser.add_argument('-s', '--size', help='set model size')
 args = parser.parse_args()
 model_path = args.model
-size = args.size
+size = int(args.size)
 
 
 if (size == None):
@@ -22,8 +22,10 @@ if (not os.path.isfile(model_path)) or (not model_path.endswith(".pt")):
     exit(1)
 
 
-exporter_args = {"format": "tflite", "dynamic": True, "half": False, "imgsz": (size, size)}
+exporter_args = {"format": "tflite", "int8": True, "imgsz": (size, size), "optimize": True, "data" : "ultralytics/cfg/datasets/coco8.yaml"}
 exporter = Exporter(overrides=exporter_args)
 model=YOLO(model_path)
-results = exporter(model=model)
+model.export(format='tflite')
+# model.export(format='tflite', int8=True, imgsz=(size, size), optimize=True, batch=1)
+# results = exporter(model=model)#
 
