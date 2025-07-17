@@ -38,13 +38,15 @@ fi
 # --model ${MODEL}
 
 
-yolo export \
-imgsz=${SIZE} \
-model=${MODEL} \
-format=tflite \
-optimize=True \
-data=ultralytics/cfg/datasets/coco8.yaml
-int8=True
+
+python3 export.py --size ${SIZE} --model ${MODEL}
+# yolo export \
+# imgsz=${SIZE} \
+# model=${MODEL} \
+# format=tflite \
+# optimize=True \
+# data=ultralytics/cfg/datasets/coco8.yaml
+# int8=True
 
 
 # edgetpu_compiler ${SAVE_MODEL_PATH}/${MODEL_NAME}_full_integer_quant.tflite

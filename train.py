@@ -1,4 +1,3 @@
-
 from ultralytics.models import YOLO
 import argparse
 import os
