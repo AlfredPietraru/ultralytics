@@ -58,6 +58,7 @@ model.train(
     epochs=2,
     imgsz=1024,
     batch=4,
+    save_period=3,
     model=model,
     resume=False
 )
