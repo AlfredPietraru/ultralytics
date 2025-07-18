@@ -9,11 +9,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-yml', '--yaml', help ='yaml file')
 parser.add_argument('-m', '--model', help='model pt path')
 parser.add_argument('-d', '--data', help='data yaml')
+parser.add_argument('-s', '--size', help='image size')
 args = parser.parse_args()
 
 model_yaml = args.yaml
 data_yaml = args.data
 model_path = args.model
+size = int(args.size)
 model = None
 
 if (data_yaml == None):
@@ -54,8 +56,8 @@ if model == None:
 print("SE INCEPE ACUM ANTRENAREA")
 model.train(
     data=data_yaml,
-    epochs=2,
-    imgsz=1024,
+    epochs=20,
+    imgsz=size,
     batch=4,
     save_period=3,
     model=model,

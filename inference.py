@@ -5,6 +5,8 @@ import tensorflow as tf
 from pycoral.utils import edgetpu
 import tflite_runtime.interpreter as tflite
 from pycoral.utils.edgetpu import list_edge_tpus
+import argparse
+import os
 
 from nms import non_max_suppression_v8
 if (len(list_edge_tpus()) == 0): 
@@ -57,20 +59,6 @@ def execute_testing_one_image(img_path, model_path, conf_thres = 0.15, iou_thres
     x = (x / input_scale) + input_zero
     x = x.astype(np.int8)
     
-
-    prediction = None
-    for _ in range(5):
-        interpreter.set_tensor(input_details[0]['index'], x)
-        interpreter.invoke()
-
-    # Benchmark loop
-    for _ in range(100):
-        start = time.perf_counter()
-        interpreter.set_tensor(input_details[0]['index'], x)
-        interpreter.invoke()
-        elapsed = (time.perf_counter() - start) * 1000
-        print(f"{elapsed:.1f}ms waiiii")
-
     prediction=None
     # # Run inference
     for _ in range(10):
@@ -106,7 +94,20 @@ def execute_testing_one_image(img_path, model_path, conf_thres = 0.15, iou_thres
     del delegates
 
 
-# execute_testing_one_image(
-#     img_path="test.jpg",
-#     model_path="yolov5UPDATED_saved_model/yolov5UPDATED_full_integer_quant_edgetpu.tflite"
-# )
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-m', '--model', help='model pt path')
+args = parser.parse_args()
+
+model_path = args.model
+if (model_path == None):
+    print("NU A FOST TRANSMIS MODELUL CA PARAMETRU")
+    exit(1)
+if (not os.path.isfile(model_path)) or (not model_path.endswith(".tflite")):
+    print("FISIERUL TRANSMIS CA PARAMETRU PENTRU MODEL NU ESTE VALID")
+    exit(1)
+
+execute_testing_one_image(
+    img_path="test.jpg",
+    model_path=model_path
+)
