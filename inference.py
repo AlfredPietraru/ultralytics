@@ -26,9 +26,14 @@ def plot_one_box_pil(box, image, label=None, color=(255, 0, 0), line_width=3, si
     
     if label:
         font = ImageFont.load_default()
-        text_size = draw.textsize(label, font)
-        text_origin = (c1[0], c1[1] - text_size[1] if c1[1] - text_size[1] > 0 else c1[1])
-        draw.rectangle([text_origin, (text_origin[0] + text_size[0], text_origin[1] + text_size[1])], fill=color)
+        text_bbox = draw.textbbox((0, 0), label, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        text_origin = (c1[0], c1[1] - text_height if c1[1] - text_height > 0 else c1[1])
+        draw.rectangle(
+            [text_origin, (text_origin[0] + text_width, text_origin[1] + text_height)],
+            fill=color
+        )
         draw.text(text_origin, label, fill=(255, 255, 255), font=font)
 
     return image
@@ -75,20 +80,18 @@ def execute_testing_one_image(img_path, model_path, conf_thres = 0.15, iou_thres
     nms_result = non_max_suppression_v8(prediction, conf_thres, iou_thres, None, False, max_det=300)
 
     print("Number of objects found:", nms_result[0].shape[0])
-    print(nms_result[0])
 
     # Draw on original image using PIL
-    image = Image.open(img_path).resize((1024, 1024)).convert("RGB")
 
     for i in range(nms_result[0].shape[0]):
         cls_id = int(nms_result[0][i][5])
         conf = int(nms_result[0][i][4] * 100)
         label = f"{labels[cls_id]} {conf}%"
-        plot_one_box_pil(nms_result[0][i][:4], image, label=label, line_width=2, size=1024)
+        plot_one_box_pil(nms_result[0][i][:4], img, label=label, line_width=2, size=1024)
 
     # Save result
     output_path = "drawn-" + model_path.split("/")[-1] + ".jpg"
-    image.save(output_path)
+    img.save(output_path)
     print(f"Saved result to {output_path}")
     del interpreter
     del delegates
@@ -103,6 +106,8 @@ model_path = args.model
 if (model_path == None):
     print("NU A FOST TRANSMIS MODELUL CA PARAMETRU")
     exit(1)
+
+print(model_path)
 if (not os.path.isfile(model_path)) or (not model_path.endswith(".tflite")):
     print("FISIERUL TRANSMIS CA PARAMETRU PENTRU MODEL NU ESTE VALID")
     exit(1)
