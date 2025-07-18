@@ -56,9 +56,9 @@ if model == None:
 print("SE INCEPE ACUM ANTRENAREA")
 model.train(
     data=data_yaml,
-    epochs=20,
+    epochs=14,
     imgsz=size,
-    batch=4,
+    batch=8,
     save_period=3,
     model=model,
     resume=False
@@ -76,7 +76,7 @@ train_sessions = [dir for dir in files_folders if re.match(pattern, dir) and (os
 train_sessions.sort()
 best_parameters_model = path + "/" + train_sessions[-1] + "/weights/best.pt"
 if os.path.isfile(best_parameters_model):
-    print("MODELUL A FOST GASIT SI VA FI MUTAT")
+    print("MODELUL A FOST GASIT. VA FI MUTAT SI REDENUMIT.")
     os.rename(best_parameters_model, "./best.pt")
 else:
     print("MODELUL NU A FOST GASIT")

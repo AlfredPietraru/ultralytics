@@ -5,7 +5,7 @@
 YAML=$1
 SIZE=1024
 
-DATASET_YAML=ultralytics/cfg/datasets/coco8.yaml
+DATASET_YAML=ultralytics/cfg/datasets/downtest.yaml
 
 MODEL_NAME=$(basename $YAML .yaml)
 SAVE_MODEL_PATH=${MODEL_NAME}_saved_model
@@ -28,6 +28,7 @@ python3 train.py \
 --size ${SIZE} \
 --data ${DATASET_YAML} \
 --model ${MODEL}
+# --yaml ${YAML}
 
 python3 export.py \
 --size ${SIZE} \
