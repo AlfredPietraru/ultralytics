@@ -23,11 +23,11 @@ then
     mkdir ${SAVE_MODEL_PATH}
 fi
 
-pip3 install opencv-python
-python3 train.py \
---size ${SIZE} \
---data ${DATASET_YAML} \
---model ${MODEL}
+# pip3 install opencv-python
+# python3 train.py \
+# --size ${SIZE} \
+# --data ${DATASET_YAML} \
+# --model ${MODEL}
 # --yaml ${YAML}
 
 python3 export.py \
