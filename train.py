@@ -56,7 +56,7 @@ if model == None:
 print("SE INCEPE ACUM ANTRENAREA")
 model.train(
     data=data_yaml,
-    epochs=20,
+    epochs=10,
     imgsz=size,
     batch=8,
     save_period=3,
@@ -64,19 +64,19 @@ model.train(
     resume=False
 )
 
-print("SE MUTA ACUM CEL MAI BUN MODEL ANTRENAT")
-path ="runs/detect"
-pattern = r'^train\d*$'
-files_folders = os.listdir(path)
-if (len(files_folders) == 0):
-    print("NU EXISTA REZULTATE DE ANTRENARE") 
-    exit(1)
+# print("SE MUTA ACUM CEL MAI BUN MODEL ANTRENAT")
+# path ="runs/detect"
+# pattern = r'^train\d*$'
+# files_folders = os.listdir(path)
+# if (len(files_folders) == 0):
+#     print("NU EXISTA REZULTATE DE ANTRENARE") 
+#     exit(1)
 
-train_sessions = [dir for dir in files_folders if re.match(pattern, dir) and (os.path.isdir(path + "/" + dir))]
-train_sessions.sort()
-best_parameters_model = path + "/" + train_sessions[-1] + "/weights/best.pt"
-if os.path.isfile(best_parameters_model):
-    print("MODELUL A FOST GASIT. VA FI MUTAT SI REDENUMIT.")
-    os.rename(best_parameters_model, "./best.pt")
-else:
-    print("MODELUL NU A FOST GASIT")
+# train_sessions = [dir for dir in files_folders if re.match(pattern, dir) and (os.path.isdir(path + "/" + dir))]
+# train_sessions.sort()
+# best_parameters_model = path + "/" + train_sessions[-1] + "/weights/best.pt"
+# if os.path.isfile(best_parameters_model):
+#     print("MODELUL A FOST GASIT. VA FI MUTAT SI REDENUMIT.")
+#     os.rename(best_parameters_model, "./best.pt")
+# else:
+#     print("MODELUL NU A FOST GASIT")

@@ -7,6 +7,7 @@ import tflite_runtime.interpreter as tflite
 from pycoral.utils.edgetpu import list_edge_tpus
 import argparse
 import os
+import yaml
 
 from nms import non_max_suppression_v8
 if (len(list_edge_tpus()) == 0): 
@@ -38,7 +39,7 @@ def plot_one_box_pil(box, image, label=None, color=(255, 0, 0), line_width=3, si
 
     return image
 
-def execute_testing_one_image(img_path, model_path, conf_thres = 0.15, iou_thres = 0.15):
+def execute_testing(location, model_path, conf_thres = 0.15, iou_thres = 0.15):
     # Load EdgeTPU delegate
     delegates = [edgetpu.load_edgetpu_delegate()]
     interpreter = tflite.Interpreter(model_path=model_path, experimental_delegates=delegates)
@@ -57,16 +58,16 @@ def execute_testing_one_image(img_path, model_path, conf_thres = 0.15, iou_thres
     print("Input shape", input_details[0]['shape'])
     print("Output shape", output_details[0]['shape'])
 
-    # Load and preprocess image
-    img = Image.open(img_path).resize((1024, 1024)).convert("RGB")
-    img_array = np.expand_dims(np.array(img), axis=0)  # Add batch dimension
-    x = img_array.astype('float32') / 255.0
-    x = (x / input_scale) + input_zero
-    x = x.astype(np.int8)
-    
-    prediction=None
-    # # Run inference
-    for _ in range(10):
+    filenames = os.listdir(location)
+    prediction=None 
+    for filename in filenames:
+        img_path = location + "/" + filename 
+        img = Image.open(img_path).resize((1024, 1024)).convert("RGB")
+        img_array = np.expand_dims(np.array(img), axis=0)  # Add batch dimension
+        x = img_array.astype('float32') / 255.0
+        x = (x / input_scale) + input_zero
+        x = x.astype(np.int8)
+        
         start = time.perf_counter()
         interpreter.set_tensor(input_details[0]['index'], x)
         interpreter.invoke()
@@ -74,45 +75,50 @@ def execute_testing_one_image(img_path, model_path, conf_thres = 0.15, iou_thres
         prediction = (prediction - output_zero) * output_scale
         print('%.1fms' % ((time.perf_counter() - start) * 1000))
 
-    prediction = prediction.transpose(0, 2, 1)
-    print("Prediction shape:", prediction[0].shape)
+        prediction = prediction.transpose(0, 2, 1)
+        print("Prediction shape:", prediction[0].shape)
+        nms_result = non_max_suppression_v8(prediction, conf_thres, iou_thres, None, False, max_det=300)
+        print("Number of objects found:", nms_result[0].shape[0])
 
-    nms_result = non_max_suppression_v8(prediction, conf_thres, iou_thres, None, False, max_det=300)
 
-    print("Number of objects found:", nms_result[0].shape[0])
+        for i in range(nms_result[0].shape[0]):
+            cls_id = int(nms_result[0][i][5])
+            conf = int(nms_result[0][i][4] * 100)
+            label = f"{labels[cls_id]} {conf}%"
+            plot_one_box_pil(nms_result[0][i][:4], img, label=label, line_width=2, size=1024)
 
-    # Draw on original image using PIL
-
-    for i in range(nms_result[0].shape[0]):
-        cls_id = int(nms_result[0][i][5])
-        conf = int(nms_result[0][i][4] * 100)
-        label = f"{labels[cls_id]} {conf}%"
-        plot_one_box_pil(nms_result[0][i][:4], img, label=label, line_width=2, size=1024)
-
-    # Save result
-    output_path = "drawn-" + model_path.split("/")[-1] + ".jpg"
-    img.save(output_path)
-    print(f"Saved result to {output_path}")
+        # Save result
+        output_path = "res/drawn-" + filename 
+        img.save(output_path)
+        print(f"Saved result to {output_path}")
     del interpreter
     del delegates
 
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--model', help='model pt path')
+parser.add_argument('-d', '--data', help='test_data')
 args = parser.parse_args()
 
 model_path = args.model
+data_yaml = args.data 
 if (model_path == None):
     print("NU A FOST TRANSMIS MODELUL CA PARAMETRU")
     exit(1)
-
-print(model_path)
 if (not os.path.isfile(model_path)) or (not model_path.endswith(".tflite")):
     print("FISIERUL TRANSMIS CA PARAMETRU PENTRU MODEL NU ESTE VALID")
     exit(1)
+if (not os.path.isfile(data_yaml)) or (not data_yaml.endswith(".yaml")):
+    print("FISIERUL TRANSMIS PENTRU SETUL DE DATE NU ESTE VALID")
+    exit(1)
 
-execute_testing_one_image(
-    img_path="test.jpg",
+with open(data_yaml, 'r') as f:
+    data = yaml.load(f, Loader=yaml.SafeLoader)
+data_key = 'test' if 'test' in data.keys() else 'val'
+path = 'datasets/' + data['path'] + '/' + data[data_key]
+
+execute_testing(
+    location=path,
     model_path=model_path
 )
+
