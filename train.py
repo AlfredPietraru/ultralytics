@@ -56,12 +56,13 @@ if model == None:
 print("SE INCEPE ACUM ANTRENAREA")
 model.train(
     data=data_yaml,
-    epochs=10,
+    epochs=20,
     imgsz=size,
-    batch=8,
+    batch=4,
     save_period=3,
     model=model,
-    resume=False
+    resume=False,
+    verbose=False
 )
 
 # print("SE MUTA ACUM CEL MAI BUN MODEL ANTRENAT")
