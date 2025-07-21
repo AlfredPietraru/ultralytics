@@ -2116,19 +2116,23 @@ class AAM(nn.Module):
         self.addapt1 = torch.nn.AdaptiveAvgPool2d(output_size=(int(beta[0] * h), int(beta[0] * w)))
         self.addapt2 = torch.nn.AdaptiveAvgPool2d(output_size=(int(beta[1] * h), int(beta[1] * w)))
         self.addapt3 = torch.nn.AdaptiveAvgPool2d(output_size=(int(beta[2] * h), int(beta[2] * w)))
-        self.conv1x1 = torch.nn.Conv2d(c1 =c_, c2=c_, k=1, s=1)
+        self.conv1x1 = torch.nn.Conv2d(in_channels=c_, out_channels=c_, kernel_size=1, stride=1, padding=1)
         self.relu = torch.nn.ReLU(inplace=True)
-        self.conv3x3 = torch.nn.Conv2d(c1=c_, c2=c_, k=3, s=1)
+        self.conv3x3 = torch.nn.Conv2d(in_channels=c_, out_channels=c_, kernel_size=3, stride=1, padding=1)
         self.sigmoid = torch.nn.Sigmoid()
         self.conv_up = Conv(c1=c_, c2=c_, k=1, s=1)
         self.conv_down = Conv(c1=c_, c2=c_, k=1, s=1)
-
+        self.concat = Concat(dimension=1)
+        self.conv = Conv(c1=c_, c2=c_)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        up = torch.nn.functional.interpolate(self.addapt1(x), self.size)
-        middle = torch.nn.functional.interpolate(self.addapt2(x), self.size)
-        down = torch.nn.functional.interpolate(self.addapt3(x), self.size)
-        val = Concat([up, middle, down], dim=1)
-        return torch.mul(self.conv_up(self.sigmoid(self.conv3x3(self.relu(self.conv(val))))), self.conv_down(val))
-    
-
+        up = self.addapt1(x)
+        middle = self.addapt2(x)
+        down = self.addapt3(x)
+        up = torch.nn.functional.interpolate(up, x.shape[2:])
+        middle = torch.nn.functional.interpolate(middle, x.shape[2:])
+        down = torch.nn.functional.interpolate(down, x.shape[2:])
+        val = self.concat([up, middle, down])
+        val = torch.mul(self.conv_up(self.sigmoid(self.conv3x3(self.relu(self.conv(val))))), self.conv_down(val))
+        x1, x2, x3 = torch.chunk(val, chunks=3, dim=1)
+        return x1 + x2 + x3
